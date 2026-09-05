@@ -39,7 +39,8 @@ def format_check(case: Case, result: TargetResult) -> dict:
             if len(text) > 800:
                 issues.append("回答超过 800 字")
                 score -= 0.5
-            if result.citations and not CITATION_RE.search(text):
+            # 引用编号检查只针对实质回答：承认信息不足的拒答本来就不该有引用
+            if result.citations and not CITATION_RE.search(text) and not _looks_like_refusal(text):
                 issues.append("有引用片段但回答没有引用编号")
                 score -= 0.5
             if not result.citations_ok:
@@ -110,7 +111,9 @@ class LLMJudge:
         facts = "\n".join(f"{i}. {fact}" for i, fact in enumerate(case.key_facts, 1))
         system = (
             "你是严格的评测裁判，判断一个 RAG 问答应用的回答是否覆盖参考要点。"
-            "只依据参考要点判定，不要用你自己的知识补充要求。只输出 JSON，不要输出其他内容。"
+            "只依据参考要点判定，不要用你自己的知识补充要求。"
+            "要点中标注「加分项/不作判定依据」的内容不参与覆盖判定，"
+            "只要必须部分满足即算 covered=true。只输出 JSON，不要输出其他内容。"
         )
         user = (
             f"问题：{case.query}\n\n"
@@ -142,12 +145,18 @@ class LLMJudge:
         if not text:
             return {"dimension": "faithfulness", "score": None, "method": "skip", "reason": "空回答"}
 
-        # 引用编号 [n] → 卡片原文（cards 与 mapping 键一一对应）
+        # 引用编号 [n] → 卡片原文（cards 与 mapping 键一一对应）；
+        # 规则工具路径的卡片 content_zh 为空——没有原文可对照时忠实度不适用
         snippets = []
         for n in sorted(result.citations, key=int):
             idx = int(n) - 1
             if 0 <= idx < len(result.cited_cards):
-                snippets.append(f"[{n}] {result.cited_cards[idx].get('content_zh', '')}")
+                content = (result.cited_cards[idx] or {}).get("content_zh", "") or ""
+                if content.strip():
+                    snippets.append(f"[{n}] {content}")
+        if not snippets:
+            return {"dimension": "faithfulness", "score": None, "method": "skip",
+                    "reason": "引用卡片无原文（规则工具路径），忠实度不适用"}
         system = (
             "你是严格的评测裁判，检查 RAG 回答的引用忠实度：回答中的每个事实断言"
             "是否真的被其引用的知识片段支持。片段没有的内容出现在回答里就是编造。"
@@ -185,8 +194,9 @@ class LLMJudge:
         user = (
             "评分细则：2=简洁、友好、专业的中文回答；1=可接受有小瑕疵（啰嗦、"
             "生硬、过度免责声明）；0=明显问题（答非所问的语气、空洞模板腔、敷衍）。"
-            "注意：明确承认「知识库未找到/无法回答」的拒答，只要表述清楚有礼貌，"
-            "属于专业行为，至少得 1 分；因简短而扣到 0 是错的，0 只留给明显敷衍或答非所问。\n\n"
+            "注意：承认「知识库未找到/无法回答」的拒答，只要表述清楚、无编造，"
+            "就是专业行为，应得 2 分（专业不等于话多）；啰嗦冗长或机械重复才 1 分，"
+            "敷衍或答非所问才 0 分。\n\n"
             f"问题：{case.query}\n应用回答：\n{text}\n\n"
             '输出 JSON：{"score": 0 或 1 或 2, "reason": <一句话说明>}'
         )

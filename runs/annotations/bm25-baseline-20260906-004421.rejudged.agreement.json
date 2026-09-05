@@ -1,0 +1,188 @@
+{
+  "n_annotated": 50,
+  "dimensions": {
+    "correctness": {
+      "n_compared": 50,
+      "agreement": 0.94,
+      "kappa": 0.824,
+      "disagreements": [
+        {
+          "case_id": "dex-009",
+          "human": "错",
+          "ai": "对",
+          "ai_score": 1.0,
+          "notes": "水+飞行双属性使电伤害 4 倍，提到 4 倍更好"
+        },
+        {
+          "case_id": "move-006",
+          "human": "对",
+          "ai": "部分对",
+          "ai_score": 0.5,
+          "notes": ""
+        },
+        {
+          "case_id": "hard-001",
+          "human": "对",
+          "ai": "部分对",
+          "ai_score": 0.5,
+          "notes": ""
+        }
+      ]
+    },
+    "faithfulness": {
+      "n_compared": 41,
+      "agreement": 0.902,
+      "kappa": 0.0,
+      "disagreements": [
+        {
+          "case_id": "mvq-002",
+          "human": "没有编造",
+          "ai": "明显编造",
+          "ai_score": 0.0,
+          "notes": ""
+        },
+        {
+          "case_id": "mvq-003",
+          "human": "没有编造",
+          "ai": "明显编造",
+          "ai_score": 0.0,
+          "notes": ""
+        },
+        {
+          "case_id": "hard-003",
+          "human": "没有编造",
+          "ai": "明显编造",
+          "ai_score": 0.0,
+          "notes": ""
+        },
+        {
+          "case_id": "mvq-001",
+          "human": "没有编造",
+          "ai": "明显编造",
+          "ai_score": 0.0,
+          "notes": ""
+        }
+      ]
+    },
+    "format": {
+      "n_compared": 50,
+      "agreement": 0.92,
+      "kappa": 0.0,
+      "disagreements": [
+        {
+          "case_id": "tc-002",
+          "human": "没问题",
+          "ai": "有问题",
+          "ai_score": 0.5,
+          "notes": "数据库里怎么会连属性克制表都没有，这个应该查一下属性克制表就知道了，怎么会找不到相关信息,检查一下索引是不是有问题"
+        },
+        {
+          "case_id": "meta-003",
+          "human": "没问题",
+          "ai": "有问题",
+          "ai_score": 0.0,
+          "notes": ""
+        },
+        {
+          "case_id": "tc-003",
+          "human": "没问题",
+          "ai": "有问题",
+          "ai_score": 0.5,
+          "notes": "属性克制又查不到，怎么回事"
+        },
+        {
+          "case_id": "tc-001",
+          "human": "没问题",
+          "ai": "有问题",
+          "ai_score": 0.5,
+          "notes": "属性克制查不到。"
+        }
+      ]
+    },
+    "tone": {
+      "n_compared": 49,
+      "agreement": 0.776,
+      "kappa": 0.0,
+      "disagreements": [
+        {
+          "case_id": "tc-002",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": "数据库里怎么会连属性克制表都没有，这个应该查一下属性克制表就知道了，怎么会找不到相关信息,检查一下索引是不是有问题"
+        },
+        {
+          "case_id": "meta-001",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": ""
+        },
+        {
+          "case_id": "oos-001",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": ""
+        },
+        {
+          "case_id": "oos-003",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": ""
+        },
+        {
+          "case_id": "oos-005",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": ""
+        },
+        {
+          "case_id": "tc-003",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": "属性克制又查不到，怎么回事"
+        },
+        {
+          "case_id": "meta-004",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": ""
+        },
+        {
+          "case_id": "oos-004",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": ""
+        },
+        {
+          "case_id": "tc-001",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": "属性克制查不到。"
+        },
+        {
+          "case_id": "meta-002",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": "对战环境全部查不到"
+        },
+        {
+          "case_id": "oos-002",
+          "human": "好",
+          "ai": "一般",
+          "ai_score": 1,
+          "notes": ""
+        }
+      ]
+    }
+  },
+  "run": "bm25-baseline-20260906-004421.rejudged.jsonl"
+}

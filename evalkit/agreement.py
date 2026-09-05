@@ -120,6 +120,9 @@ def compute_agreement(records: list[dict], annotations: dict[str, dict]) -> dict
             agree = sum(h == a for h, a in zip(human_labels, ai_labels))
             dim_out["agreement"] = round(agree / n, 3)
             dim_out["kappa"] = cohen_kappa(human_labels, ai_labels)
+            # Kappa 退化：任一方全同判时 Kappa 失去意义（一致全被"预期一致"解释），
+            # 此时以一致率为准——典型场景：应用一条都没编造，人工全判"没有编造"
+            dim_out["degenerate"] = len(set(human_labels)) == 1 or len(set(ai_labels)) == 1
             dim_out["disagreements"] = disagreements
         result["dimensions"][dim] = dim_out
     return result

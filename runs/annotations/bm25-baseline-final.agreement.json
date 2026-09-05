@@ -1,0 +1,58 @@
+{
+  "n_annotated": 50,
+  "dimensions": {
+    "correctness": {
+      "n_compared": 50,
+      "agreement": 0.98,
+      "kappa": 0.935,
+      "degenerate": false,
+      "disagreements": [
+        {
+          "case_id": "dex-009",
+          "human": "错",
+          "ai": "对",
+          "ai_score": 1.0,
+          "notes": "水+飞行双属性使电伤害 4 倍，提到 4 倍更好"
+        }
+      ]
+    },
+    "faithfulness": {
+      "n_compared": 37,
+      "agreement": 0.973,
+      "kappa": 0.0,
+      "degenerate": true,
+      "disagreements": [
+        {
+          "case_id": "move-004",
+          "human": "没有编造",
+          "ai": "有编造嫌疑",
+          "ai_score": 0.5,
+          "notes": ""
+        }
+      ]
+    },
+    "format": {
+      "n_compared": 50,
+      "agreement": 0.98,
+      "kappa": 0.0,
+      "degenerate": true,
+      "disagreements": [
+        {
+          "case_id": "meta-003",
+          "human": "没问题",
+          "ai": "有问题",
+          "ai_score": 0.0,
+          "notes": ""
+        }
+      ]
+    },
+    "tone": {
+      "n_compared": 49,
+      "agreement": 1.0,
+      "kappa": 1.0,
+      "degenerate": true,
+      "disagreements": []
+    }
+  },
+  "run": "bm25-baseline-final.jsonl"
+}

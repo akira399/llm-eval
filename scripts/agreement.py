@@ -47,9 +47,12 @@ def main() -> int:
             print(f"{DIM_NAMES[dim]:<8}{0:>6}     -       -    （无可比对样本）")
             continue
         kappa = stat["kappa"]
-        verdict = ("优秀" if kappa and kappa >= 0.8 else
-                   "良好" if kappa and kappa >= 0.6 else
-                   "中等" if kappa and kappa >= 0.4 else "需要修订细则")
+        if stat.get("degenerate"):
+            verdict = "Kappa 退化（一方全同判），以一致率为准"
+        else:
+            verdict = ("优秀" if kappa and kappa >= 0.8 else
+                       "良好" if kappa and kappa >= 0.6 else
+                       "中等" if kappa and kappa >= 0.4 else "需要修订细则")
         print(f"{DIM_NAMES[dim]:<8}{stat['n_compared']:>6}{stat['agreement']:>8.1%}"
               f"{kappa if kappa is not None else '-':>8}   {verdict}")
 

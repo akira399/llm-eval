@@ -137,7 +137,14 @@ class PokeRagProvider:
         return res
 
     def effective_config(self) -> dict:
-        """运行元数据：这次评测的被测系统到底跑在什么配置上（可复现的依据）。"""
+        """运行元数据：这次评测的被测系统到底跑在什么配置上（可复现的依据）。
+
+        api_key 只保留脱敏形式——元数据会进 summary.json，密钥不能落盘明文。
+        """
         if self.mode != "inprocess":
             return {"mode": self.mode, "base_url": self.base_url}
-        return self._pr_config.load()
+        cfg = self._pr_config.load()
+        key = cfg.get("llm", {}).get("api_key") or ""
+        if key:
+            cfg["llm"]["api_key"] = f"{key[:3]}****{key[-4:]}" if len(key) > 6 else "****"
+        return cfg

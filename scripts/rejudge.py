@@ -45,6 +45,13 @@ def main() -> int:
 
     version = os.path.basename(run_file).rsplit("-", 2)[0]
     summary = summarize(records, version=version)
+    # 重判不改变被测系统状态：沿用原运行的有效配置元数据
+    src_summary = os.path.splitext(run_file)[0] + ".summary.json"
+    if os.path.exists(src_summary):
+        with open(src_summary, encoding="utf-8") as f:
+            old = json.load(f)
+        if old.get("effective_config"):
+            summary["effective_config"] = old["effective_config"]
     out_path = os.path.splitext(run_file)[0] + ".rejudged.jsonl"
     with open(out_path, "w", encoding="utf-8") as f:
         for rec in records:

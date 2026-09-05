@@ -39,10 +39,17 @@ def main() -> int:
         run_file = os.path.join(_ROOT, run_file)
     with open(run_file, encoding="utf-8") as f:
         records = [json.loads(line) for line in f if line.strip()]
-    version = os.path.basename(run_file).rsplit("-", 2)[0] if "-" in os.path.basename(run_file) else "run"
+    # 版本名与生效配置优先读随行 summary（运行记录本身不携带运行元数据）
+    summary_path = os.path.splitext(run_file)[0] + ".summary.json"
+    version = os.path.splitext(os.path.basename(run_file))[0]
+    cfg: dict = {}
+    if os.path.exists(summary_path):
+        with open(summary_path, encoding="utf-8") as f:
+            saved = json.load(f)
+        version = saved.get("version") or version
+        cfg = saved.get("effective_config") or {}
 
     summary = summarize(records, version=version)
-    cfg = summary.get("effective_config", {})
     lines = [
         f"# LLM 应用效果评测报告 · {version}",
         "",
@@ -102,8 +109,12 @@ def main() -> int:
         lines += [md_table(
             ["维度", "可比对", "一致率", "Kappa"],
             [[DIM_NAMES[dim], stat.get("n_compared", 0), stat.get("agreement", "-"),
-              stat.get("kappa", "-")] for dim, stat in agreement["dimensions"].items()],
-        ), "", "Kappa 判读：≥0.8 优秀 · ≥0.6 良好 · ≥0.4 中等 · <0.4 需要修订评分细则。"]
+              ("-（退化）" if stat.get("degenerate") else stat.get("kappa", "-"))]
+             for dim, stat in agreement["dimensions"].items()],
+        ), "",
+        "Kappa 判读：≥0.8 优秀 · ≥0.6 良好 · ≥0.4 中等。标注「退化」表示至少一方"
+        "全部同判（Kappa 数学上失去意义，以一致率为准）——忠实度/格式维度的人工标注"
+        "全为同一档，恰恰说明被测应用没有出现编造或格式问题。"]
 
     out_dir = os.path.join(_ROOT, "reports")
     os.makedirs(out_dir, exist_ok=True)

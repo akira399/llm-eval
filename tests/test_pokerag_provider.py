@@ -1,4 +1,5 @@
 """被测适配器测试：配置快照注入与元数据（轻量，不触发 LLM/检索）。"""
+import json
 import os
 import sys
 
@@ -45,3 +46,15 @@ def test_poke_rag_on_sys_path():
     provider = PokeRagProvider(root=root)
     assert root in sys.path
     assert provider.effective_config().get("rag") is not None
+
+
+def test_effective_config_masks_api_key():
+    """运行元数据里的 api_key 必须脱敏（元数据会落盘 summary.json）。"""
+    root = poke_rag_root()
+    if not os.path.isdir(root):
+        pytest.skip("poke-rag 不在默认位置")
+    provider = PokeRagProvider(root=root)
+    cfg = provider.effective_config()
+    key = cfg.get("llm", {}).get("api_key") or ""
+    assert "****" in key or key == ""
+    assert "sk-4cff" not in json.dumps(cfg)  # 任何已知明文 key 形态都不允许出现
