@@ -1,6 +1,6 @@
 """评测报告生成器：把一次运行 + 人工标注（如有）汇总成 Markdown 报告。
 
-产物落在 reports/（入库），是简历附件《评测报告 PDF》的文字底稿。
+产物落在 reports/（入库），是《评测报告 PDF》的文字底稿。
 用法：
   ../poke-rag/.venv/Scripts/python.exe scripts/make_report.py [runs/xxx.jsonl]
 """

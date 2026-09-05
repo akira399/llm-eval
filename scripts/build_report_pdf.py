@@ -2,7 +2,7 @@
 
 与 poke-rag 的 build_lessons_pdf.py 同一套方案（本机 Edge + 系统中文字体）。
 运行：../poke-rag/.venv/Scripts/python.exe scripts/build_report_pdf.py
-产物：reports/LLM应用效果评测报告.pdf（gitignore，作为简历附件的最终版式）
+产物：reports/LLM应用效果评测报告.pdf（gitignore，最终交付版式）
 """
 import os
 import subprocess
