@@ -39,6 +39,12 @@ $PY scripts/summarize.py "runs/bm25-baseline-*.jsonl" "runs/topk8-*.jsonl"
 $PY scripts/export_promptfoo_tests.py
 npx promptfoo eval -c promptfoo/promptfooconfig.yaml && npx promptfoo view
 
+# 人工盲评 → 一致率 → 报告（"AI 裁判可信"的证据链）
+$PY -m streamlit run scripts/annotate_app.py      # 逐条盲评（界面隐藏 AI 分数）
+$PY scripts/agreement.py                          # 一致率 + Cohen's Kappa
+$PY -m streamlit run scripts/show_report.py --server.port=8502
+$PY scripts/make_report.py                        # 产出 reports/评测报告-*.md
+
 # 单元测试
 $PY -m pytest tests/ -q
 ```
@@ -62,6 +68,6 @@ $PY -m pytest tests/ -q
 ## 路线图
 
 - **M0（已完成）**：平台骨架 + 50 条种子用例 + 适配器/Runner/Judge + promptfoo 接线
-- **M1**：人工抽检一致性工具（Kappa）+ Streamlit 报表
+- **M1（工具就绪，待人工标注）**：盲评标注界面 + 一致率/Kappa 计算 + Streamlit 报表 + 报告生成器
 - **M2**：版本回归真实数据 + 失败归因报告
 - **M3**：种子扩写 30→200 + 反馈回流格式 + 红队用例 + 评测报告 PDF

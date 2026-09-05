@@ -1,6 +1,7 @@
 # llm-eval 忽略清单
-# 运行产物（原始记录/汇总，可随时重跑生成）
-runs/
+# 运行产物（原始记录/汇总，可随时重跑生成）；人工标注数据除外（一致性的评审证据，入库）
+runs/*
+!runs/annotations/
 # 评测平台自身密钥配置（默认复用 poke-rag 的 config.local.json）
 config.local.json
 __pycache__/

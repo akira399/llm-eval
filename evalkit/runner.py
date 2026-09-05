@@ -41,7 +41,7 @@ class Runner:
             for rec in records:
                 f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
-        summary = self.summarize(records, version=version)
+        summary = summarize(records, version=version)
         summary["run_file"] = os.path.basename(run_path)
         summary["effective_config"] = self._effective_config()
         summary_path = run_path.replace(".jsonl", ".summary.json")
@@ -66,46 +66,45 @@ class Runner:
         except Exception as exc:
             return {"error": str(exc)}
 
-    # ---------------------------------------------------------------- 汇总
 
-    @staticmethod
-    def summarize(records: list[dict], version: str) -> dict:
-        n = len(records)
-        answered = [r for r in records if not r["target"]["rejected"] and not r["target"]["error"]]
-        rejected = sum(1 for r in records if r["target"]["rejected"])
-        errors = sum(1 for r in records if r["target"]["error"])
-        latencies = [r["target"]["latency_ms"] for r in records if not r["target"]["error"]]
+def summarize(records: list[dict], version: str) -> dict:
+    """一组运行记录的统计：总数/作答/拒答/错误、耗时、四维均分、分类目拆分。"""
+    n = len(records)
+    answered = [r for r in records if not r["target"]["rejected"] and not r["target"]["error"]]
+    rejected = sum(1 for r in records if r["target"]["rejected"])
+    errors = sum(1 for r in records if r["target"]["error"])
+    latencies = [r["target"]["latency_ms"] for r in records if not r["target"]["error"]]
 
-        summary: dict = {
-            "version": version,
-            "n_cases": n,
-            "n_answered": len(answered),
-            "n_rejected": rejected,
-            "n_errors": errors,
-            "latency_ms_avg": round(statistics.mean(latencies)) if latencies else None,
-            "by_difficulty": {},
-            "by_category": {},
-            "judge_means": {},
-        }
+    summary: dict = {
+        "version": version,
+        "n_cases": n,
+        "n_answered": len(answered),
+        "n_rejected": rejected,
+        "n_errors": errors,
+        "latency_ms_avg": round(statistics.mean(latencies)) if latencies else None,
+        "by_difficulty": {},
+        "by_category": {},
+        "judge_means": {},
+    }
 
-        for difficulty in ("easy", "hard"):
-            subset = [r for r in records if r["case"]["difficulty"] == difficulty]
-            if subset:
-                summary["by_difficulty"][difficulty] = _stats(subset)
+    for difficulty in ("easy", "hard"):
+        subset = [r for r in records if r["case"]["difficulty"] == difficulty]
+        if subset:
+            summary["by_difficulty"][difficulty] = _stats(subset)
 
-        categories = sorted({r["case"]["category"] for r in records})
-        for cat in categories:
-            summary["by_category"][cat] = _stats([r for r in records if r["case"]["category"] == cat])
+    categories = sorted({r["case"]["category"] for r in records})
+    for cat in categories:
+        summary["by_category"][cat] = _stats([r for r in records if r["case"]["category"] == cat])
 
-        for dim in JUDGE_DIMENSIONS:
-            scores = [
-                r["judge"][dim]["score"]
-                for r in records
-                if r.get("judge") and r["judge"].get(dim) and r["judge"][dim].get("score") is not None
-            ]
-            if scores:
-                summary["judge_means"][dim] = round(statistics.mean(scores), 3)
-        return summary
+    for dim in JUDGE_DIMENSIONS:
+        scores = [
+            r["judge"][dim]["score"]
+            for r in records
+            if r.get("judge") and r["judge"].get(dim) and r["judge"][dim].get("score") is not None
+        ]
+        if scores:
+            summary["judge_means"][dim] = round(statistics.mean(scores), 3)
+    return summary
 
 
 def _stats(records: list[dict]) -> dict:
