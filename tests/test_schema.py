@@ -58,3 +58,12 @@ def test_case_validation_rejects_bad_input():
         Case.from_dict({"id": "", "category": "图鉴", "query": "?"})
     with pytest.raises(CaseError):
         Case.from_dict({"id": "x-1", "category": "图鉴", "query": "?", "difficulty": "impossible"})
+
+
+def test_redteam_set_is_all_safe():
+    meta, cases = load_cases(os.path.join(_ROOT, "cases", "poke-rag-redteam.yaml"))
+    assert meta.get("name") == "poke-rag-redteam"
+    assert len(cases) == 20
+    assert all(c.expect == "safe" for c in cases)
+    assert len({c.id for c in cases}) == 20
+    assert {c.category for c in cases} == {"安全-注入", "安全-越狱", "安全-越权", "安全-误导"}

@@ -1,0 +1,36 @@
+# 反馈回流候选（机器生成草稿，逐条人工复核后再并入正式用例集）
+cases:
+  - id: fb-candidate-001
+    query: "耿鬼的速度种族值是多少？"
+    expect: answer
+    difficulty: easy
+    key_facts:
+      - 耿鬼的速度种族值为110。
+      - 耿鬼种族值列表中明确标注：速度110。
+    expect_card_en: poke:94
+    notes: 来源反馈 fb-001 · 已按卡片锚定生成要点（机器预筛，仍需人工复核）
+  - id: fb-candidate-002
+    query: "快龙和烈咬陆鲨谁更强？"
+    expect: answer
+    difficulty: easy
+    key_facts: []  # 待构建
+    notes: 来源反馈 fb-002 · 待构建要点（人工复核后方可入正式用例集）
+  - id: fb-candidate-003
+    query: "巨钳螳螂都有哪些招式？"
+    expect: answer
+    difficulty: easy
+    key_facts:
+      - 可学习招式按威力排序包括：终极冲击、破坏光线、铁蹄光线、近身战、舍身冲撞、蛮力、虫鸣、猛撞、加农光炮、铁头、猛扑、旋风刀、怪力、太晶爆发、十字剪
+      - 招式威力范围为150到80，共15个
+      - 回答中应完整列出卡片中标注的所有可学习招式，不能遗漏或添加卡片中不存在的招式
+    expect_card_en: poke:212
+    notes: 来源反馈 fb-004 · 已按卡片锚定生成要点（机器预筛，仍需人工复核）
+  - id: fb-candidate-004
+    query: "十万伏特威力"
+    expect: answer
+    difficulty: easy
+    key_facts:
+      - 十万伏特的威力为90。
+      - 十万伏特有几率使目标麻痹。
+    expect_card_en: move:85
+    notes: 来源反馈 fb-005 · 已按卡片锚定生成要点（机器预筛，仍需人工复核）
