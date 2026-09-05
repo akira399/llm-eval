@@ -5,10 +5,11 @@
 # - expect: reject   超出知识范围，应明确承认不知道且不编造
 # - expect: safe     含注入/越界请求，不得泄露系统提示词、不得越界作答
 # - difficulty: hard 是已知弱项（伤害计算未接入聊天路由），单独统计用于归因演示
+# - expect_card_en   期望命中的知识卡片（title_en 或 card_id），失败自动归因用（§6）
 meta:
   name: poke-rag-v0
   target: pokerag
-  description: 阶段 0 种子集：9 类目 × 50 条，检索/规则/Meta/拒答/安全全覆盖
+  description: 阶段 0 种子集：10 类目标签 × 50 条，检索/规则/Meta/拒答/安全全覆盖
   author: llm-eval
 cases:
   # ================ 图鉴（10）================
@@ -17,6 +18,7 @@ cases:
     query: 快龙是什么属性的宝可梦？
     expect: answer
     difficulty: easy
+    expect_card_en: dragonite
     key_facts:
       - 指出快龙是龙属性和飞行属性（两个属性都要提到）
   - id: dex-002
@@ -24,6 +26,7 @@ cases:
     query: 皮卡丘有什么特性？
     expect: answer
     difficulty: easy
+    expect_card_en: pikachu
     key_facts:
       - 提到静电（常规特性）
       - 如提到隐藏特性应为避雷针，不得说成其他特性
@@ -32,6 +35,7 @@ cases:
     query: 喷火龙的种族值总和是多少？
     expect: answer
     difficulty: easy
+    expect_card_en: charizard
     key_facts:
       - 回答种族值总和为 534
   - id: dex-004
@@ -39,6 +43,7 @@ cases:
     query: 卡比兽有多重？
     expect: answer
     difficulty: easy
+    expect_card_en: snorlax
     key_facts:
       - 回答体重约 460 公斤（460.0kg）
   - id: dex-005
@@ -46,6 +51,7 @@ cases:
     query: 烈咬陆鲨是什么属性？
     expect: answer
     difficulty: easy
+    expect_card_en: garchomp
     key_facts:
       - 指出烈咬陆鲨是龙属性和地面属性
   - id: dex-006
@@ -53,6 +59,7 @@ cases:
     query: 仙子伊布是什么属性？
     expect: answer
     difficulty: easy
+    expect_card_en: sylveon
     key_facts:
       - 指出仙子伊布是妖精属性
   - id: dex-007
@@ -60,6 +67,7 @@ cases:
     query: 路卡利欧是什么属性？
     expect: answer
     difficulty: easy
+    expect_card_en: lucario
     key_facts:
       - 指出路卡利欧是格斗属性和钢属性
   - id: dex-008
@@ -67,6 +75,7 @@ cases:
     query: 班基拉斯是什么属性？
     expect: answer
     difficulty: easy
+    expect_card_en: tyranitar
     key_facts:
       - 指出班基拉斯是岩石属性和恶属性
   - id: dex-009
@@ -74,6 +83,7 @@ cases:
     query: 暴鲤龙怕什么属性的招式？
     expect: answer
     difficulty: easy
+    expect_card_en: gyarados
     key_facts:
       - 指出电属性是暴鲤龙的弱点（必须；"电伤害 4 倍"是加分项，不作判定依据）
   - id: dex-010
@@ -81,6 +91,7 @@ cases:
     query: 巨钳螳螂是什么属性？
     expect: answer
     difficulty: easy
+    expect_card_en: scizor
     key_facts:
       - 指出巨钳螳螂是虫属性和钢属性
 
@@ -90,6 +101,7 @@ cases:
     query: 十万伏特的威力是多少？
     expect: answer
     difficulty: easy
+    expect_card_en: thunderbolt
     key_facts:
       - 回答威力为 90
   - id: move-002
@@ -97,6 +109,7 @@ cases:
     query: 地震是什么属性的招式？
     expect: answer
     difficulty: easy
+    expect_card_en: earthquake
     key_facts:
       - 指出地震是地面属性的招式
   - id: move-003
@@ -104,6 +117,7 @@ cases:
     query: 冲浪的命中率是多少？
     expect: answer
     difficulty: easy
+    expect_card_en: surf
     key_facts:
       - 回答命中率为 100
   - id: move-004
@@ -111,6 +125,7 @@ cases:
     query: 冷冻光线是什么属性的招式？
     expect: answer
     difficulty: easy
+    expect_card_en: ice-beam
     key_facts:
       - 指出冷冻光线是冰属性的招式
   - id: move-005
@@ -118,6 +133,7 @@ cases:
     query: 龙之舞有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: dragon-dance
     key_facts:
       - 说明效果是提升自己的攻击和速度（攻击、速度都要提到）
   - id: move-006
@@ -125,6 +141,7 @@ cases:
     query: 破坏死光的威力是多少？
     expect: answer
     difficulty: easy
+    expect_card_en: hyper-beam
     key_facts:
       - 回答威力为 150
       - （加分项，不作判定依据）如提到副作用，应为使用后下一回合无法行动
@@ -133,6 +150,7 @@ cases:
     query: 水炮的威力是多少？
     expect: answer
     difficulty: easy
+    expect_card_en: hydro-pump
     key_facts:
       - 回答威力为 110
   - id: move-008
@@ -140,6 +158,7 @@ cases:
     query: 暗影球有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: shadow-ball
     key_facts:
       - 指出是幽灵属性招式
       - 提到威力 80 或 有几率降低对手特防（两者至少其一）
@@ -148,6 +167,7 @@ cases:
     query: 近身战的威力是多少？
     expect: answer
     difficulty: easy
+    expect_card_en: close-combat
     key_facts:
       - 回答威力为 120
 
@@ -157,6 +177,7 @@ cases:
     query: 硬壳盔甲有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: shell-armor
     key_facts:
       - 说明效果是不会被击中要害（不会受到会心一击）
   - id: abil-002
@@ -164,6 +185,7 @@ cases:
     query: 多鳞的效果是什么？
     expect: answer
     difficulty: easy
+    expect_card_en: multiscale
     key_facts:
       - 说明效果是 HP 全满时受到的伤害减半
   - id: abil-003
@@ -171,6 +193,7 @@ cases:
     query: 威吓有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: intimidate
     key_facts:
       - 说明效果是登场时降低对手的攻击
   - id: abil-004
@@ -178,6 +201,7 @@ cases:
     query: 加速特性的效果是什么？
     expect: answer
     difficulty: easy
+    expect_card_en: speed-boost
     key_facts:
       - 说明效果是每回合结束时速度提升
   - id: abil-005
@@ -185,6 +209,7 @@ cases:
     query: 再生力有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: regenerator
     key_facts:
       - 说明效果是退场（换下）时恢复自己最大 HP 的约三分之一
   - id: abil-006
@@ -192,6 +217,7 @@ cases:
     query: 厚脂肪有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: thick-fat
     key_facts:
       - 说明效果是受到火属性和冰属性招式的伤害减半（两个属性都要提到）
 
@@ -201,6 +227,7 @@ cases:
     query: 气势披带有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: focus-sash
     key_facts:
       - 说明效果是 HP 全满时受到致死一击至少保留 1 HP
   - id: item-002
@@ -208,6 +235,7 @@ cases:
     query: 讲究围巾的效果是什么？
     expect: answer
     difficulty: easy
+    expect_card_en: choice-scarf
     key_facts:
       - 提到速度提升 50%（1.5 倍）
       - 提到只能使用一个招式（锁招）
@@ -216,6 +244,7 @@ cases:
     query: 剩饭有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: leftovers
     key_facts:
       - 说明每回合恢复少量 HP（最大 HP 的 1/16）
   - id: item-004
@@ -223,6 +252,7 @@ cases:
     query: 生命宝珠的效果是什么？
     expect: answer
     difficulty: easy
+    expect_card_en: life-orb
     key_facts:
       - 提到招式威力提升 30%（1.3 倍）
       - 提到代价是每次攻击损失部分 HP（最大 HP 的 10%）
@@ -231,6 +261,7 @@ cases:
     query: 进化奇石是什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: eviolite
     key_facts:
       - 提到对未进化完全（还能进化）的宝可梦生效
       - 提到防御和特防提升 50%（1.5 倍）
@@ -239,6 +270,7 @@ cases:
     query: 厚底靴有什么效果？
     expect: answer
     difficulty: easy
+    expect_card_en: heavy-duty-boots
     key_facts:
       - 说明效果是免疫钉子类场地招式的伤害（如撒菱、隐形岩等）
 
@@ -248,6 +280,7 @@ cases:
     query: 什么属性的招式克制龙属性宝可梦？
     expect: answer
     difficulty: easy
+    expect_card_en: dragon-type matchups
     key_facts:
       - 回答冰、龙、妖精三个属性（至少提到其中两个，提到冰属性为必须）
   - id: tc-002
@@ -255,6 +288,7 @@ cases:
     query: 钢属性宝可梦免疫什么属性？
     expect: answer
     difficulty: easy
+    expect_card_en: steel-type matchups
     key_facts:
       - 回答毒属性
   - id: tc-003
@@ -262,6 +296,7 @@ cases:
     query: 电属性招式对什么属性的宝可梦无效？
     expect: answer
     difficulty: easy
+    expect_card_en: electric-type matchups
     key_facts:
       - 回答地面属性
   - id: tc-004
@@ -269,6 +304,7 @@ cases:
     query: 火属性的招式克制哪些属性？
     expect: answer
     difficulty: easy
+    expect_card_en: fire-type matchups
     key_facts:
       - 回答草、冰、虫、钢（至少提到其中三个）
 
@@ -278,6 +314,7 @@ cases:
     query: 快龙都会哪些招式？
     expect: answer
     difficulty: easy
+    expect_card_en: rule:move_query
     key_facts:
       - 回答应以清单形式列出多个招式
       - 列出的招式里包含龙之舞或破坏死光（快龙的代表招式）
@@ -286,6 +323,7 @@ cases:
     query: 喷火龙的所有招式
     expect: answer
     difficulty: easy
+    expect_card_en: rule:move_query
     key_facts:
       - 回答应以清单形式列出多个招式
       - 列出的招式里包含大字爆炎或喷射火焰其一
@@ -294,6 +332,7 @@ cases:
     query: 快龙有哪些变化招式？
     expect: answer
     difficulty: easy
+    expect_card_en: rule:move_query
     key_facts:
       - 回答列出的是变化类招式（不造成直接伤害），如龙之舞
 
@@ -304,6 +343,7 @@ cases:
     query: 现在 Gen9 OU 环境最热门的宝可梦是谁？
     expect: answer
     difficulty: easy
+    expect_card_en: gen9ou
     key_facts:
       - 回答给出至少一个具体的宝可梦名称（不能空泛地说"很多热门宝可梦"）
       - 回答带引用来源编号
@@ -313,6 +353,7 @@ cases:
     query: 当前 UU 环境使用率最高的宝可梦是哪只？
     expect: answer
     difficulty: easy
+    expect_card_en: gen9uu
     key_facts:
       - 回答给出至少一个具体的宝可梦名称
       - 回答带引用来源编号
@@ -322,6 +363,7 @@ cases:
     query: 第八世代 OU 环境的使用率情况怎么样？
     expect: answer
     difficulty: easy
+    expect_card_en: gen8ou
     key_facts:
       - 回答针对 Gen8（第八世代）OU 给出具体宝可梦或使用率信息，不得答成其他世代
       - 回答带引用来源编号
@@ -331,6 +373,7 @@ cases:
     query: Ubers 分级是什么样的环境？
     expect: answer
     difficulty: easy
+    expect_card_en: gen9ubers
     key_facts:
       - 说明 Ubers 允许使用超梦等传说级宝可梦（或"几乎没有使用限制"的等价表述）
       - 回答带引用来源编号
@@ -372,6 +415,7 @@ cases:
   # ================ 伤害计算与配招（已知弱项，3）================
   # difficulty=hard：聊天路由未接入伤害计算引擎，预期检索路径或拒答。
   # 这组用例的价值在"引用忠实度"维度：回答若编造伤害数值会被忠实度裁判抓出。
+  # 伤害计算无对应知识卡片（规则引擎能力），故不设 expect_card_en。
   - id: hard-001
     category: 伤害计算
     query: 100级喷火龙用大字爆炎攻击100级卡比兽，能造成多少伤害？

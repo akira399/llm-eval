@@ -25,6 +25,7 @@ class Case:
     difficulty: str = "easy"
     key_facts: list[str] = field(default_factory=list)
     notes: str = ""
+    expect_card_en: str = ""  # 期望命中的知识卡片（title_en 或 card_id），失败归因用；可省略
 
     @classmethod
     def from_dict(cls, raw: dict, source: str = "") -> "Case":
@@ -49,6 +50,7 @@ class Case:
             difficulty=difficulty,
             key_facts=key_facts,
             notes=str(raw.get("notes", "")),
+            expect_card_en=str(raw.get("expect_card_en", "") or ""),
         )
 
     def to_dict(self) -> dict:
