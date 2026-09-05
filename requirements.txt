@@ -1,0 +1,5 @@
+# 依赖说明：本平台复用 ../poke-rag/.venv（被测系统同解释器，避免双份依赖）。
+# poke-rag venv 已有 openai/httpx；此处仅补充平台自身依赖。
+pyyaml>=6.0
+# 开发/测试
+pytest>=8.0

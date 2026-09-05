@@ -1,0 +1,13 @@
+# promptfoo 阶段 0 配置：用 promptfoo 跑与自研平台完全相同的被测适配器。
+# 测试文件由 scripts/export_promptfoo_tests.py 从 cases/poke-rag-v0.yaml 转换生成：
+#   python scripts/export_promptfoo_tests.py
+# 运行（provider 依赖 poke-rag venv 的包，需指定解释器）：
+#   PROMPTFOO_PYTHON=../poke-rag/.venv/Scripts/python.exe \
+#     npx promptfoo eval -c promptfoo/promptfooconfig.yaml
+#   npx promptfoo view            # 打开 Web UI 看结果
+description: Poke-RAG 阶段0评测（经 llm-eval 适配器）
+prompts:
+  - "{{query}}"
+providers:
+  - python://../evalkit/providers/promptfoo_provider.py
+tests: promptfoo-tests.yaml

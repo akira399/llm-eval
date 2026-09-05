@@ -1,0 +1,11 @@
+# llm-eval 忽略清单
+# 运行产物（原始记录/汇总，可随时重跑生成）
+runs/
+# 评测平台自身密钥配置（默认复用 poke-rag 的 config.local.json）
+config.local.json
+__pycache__/
+*.pyc
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

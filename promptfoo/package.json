@@ -1,0 +1,13 @@
+{
+  "name": "llm-eval-promptfoo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "promptfoo 接线（阶段 0）：与自研平台共用 llm-eval 适配器",
+  "scripts": {
+    "eval": "promptfoo eval -c promptfooconfig.yaml",
+    "view": "promptfoo view"
+  },
+  "dependencies": {
+    "promptfoo": "^0.122.2"
+  }
+}
