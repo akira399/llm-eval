@@ -12,6 +12,8 @@ TARGET_CATALOG: dict[str, dict] = {
     "demo-chat": {"kind": "chat", "description": "规则版售后客服（离线确定性演示）"},
     "demo-json": {"kind": "json", "description": "规则版信息抽取（离线确定性演示）"},
     "pokerag-local": {"kind": "rag", "description": "Poke-RAG 知识库问答（进程内，需本地环境）"},
+    "demo-chat-http": {"kind": "chat", "description": "演示客服（HTTP JSON 连接器，"
+                       "base_url 由 DEMO_CHAT_HTTP_URL 指定，默认 127.0.0.1:8766/invoke）"},
 }
 
 
@@ -29,4 +31,11 @@ def build_target(target_id: str) -> TargetAdapter:
         from evalkit.providers.pokerag import PokeRagAdapter
 
         return PokeRagAdapter()
+    if target_id == "demo-chat-http":
+        import os
+
+        from evalkit.providers.http_json import HttpJsonAdapter
+
+        base_url = os.environ.get("DEMO_CHAT_HTTP_URL", "http://127.0.0.1:8766/invoke")
+        return HttpJsonAdapter(base_url=base_url, target_id=target_id)
     raise KeyError(f"未注册的被测目标：{target_id}（可选：{sorted(TARGET_CATALOG)}）")

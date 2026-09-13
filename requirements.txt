@@ -6,3 +6,8 @@ pytest>=8.0
 
 # MCP 服务（Phase 1）：官方 SDK v1.x（v2 改了 API 且拉高 pydantic 与现有依赖冲突）
 mcp>=1.0,<2
+
+# HTTP API 服务与演示被测服务（Phase 2）
+fastapi>=0.110
+uvicorn>=0.29
+httpx>=0.27

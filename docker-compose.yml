@@ -1,0 +1,25 @@
+# llm-eval 单租户交付形态（Phase 2 最小闭环）
+# 说明：本机无 Docker，此文件为交付模板——首次使用请先 docker compose up --build 验证。
+# api       ：评测平台 API（与 MCP/CLI 共用同一服务层）
+# target    ：演示被测应用（HTTP JSON 协议），演示"平台与被测系统跨进程"的形态
+services:
+  api:
+    build: .
+    ports:
+      - "8800:8800"
+    environment:
+      # 被测目标注册示例：指向 compose 内的演示服务
+      DEMO_CHAT_HTTP_URL: "http://target:8766/invoke"
+    volumes:
+      - eval-runs:/app/runs        # 运行产物与 jobs.db 持久化
+    depends_on:
+      - target
+
+  target:
+    build: .
+    command: uvicorn scripts.demo_chat_http:app --host 0.0.0.0 --port 8766
+    ports:
+      - "8766:8766"
+
+volumes:
+  eval-runs:
