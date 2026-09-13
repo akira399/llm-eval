@@ -103,8 +103,11 @@ def test_api_service_end_to_end(service):
     assert started.status_code == 200
     job_id = started.json()["job"]["id"]
 
-    service._execute_job(job_id)  # 测试同步执行
-    job = client.get(f"/v1/jobs/{job_id}").json()
+    for _ in range(120):  # 后台线程已在跑：轮询到终态（避免同步执行竞态）
+        job = client.get(f"/v1/jobs/{job_id}").json()
+        if job["status"] in ("succeeded", "partial", "failed", "cancelled"):
+            break
+        time.sleep(0.25)
     assert job["status"] == "succeeded" and job["done"] == 6
 
     run = client.get("/v1/runs/api-e2e").json()

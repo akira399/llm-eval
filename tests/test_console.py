@@ -55,9 +55,9 @@ def test_overview_page_loads(service):
     texts = ([b.body for b in at.markdown] + [b.body for b in at.subheader]
              + [m.label for m in at.metric])
     assert any("评测集（考卷）" in t for t in texts)
-    from evalkit.registry import TARGET_CATALOG
+    from evalkit.registry import effective_catalog
 
-    assert any(m.label == "被测目标" and m.value == str(len(TARGET_CATALOG))
+    assert any(m.label == "被测目标" and m.value == str(len(effective_catalog()))
                for m in at.metric)
 
 
@@ -68,7 +68,9 @@ def test_start_run_from_ui_and_finish(service):
 
     at.sidebar.radio[0].set_value("🚀 发起评测").run()
     at.selectbox(key="start-suite").set_value("demo-chat").run()
-    at.selectbox(key="start-target").set_value("demo-chat").run()
+    opts = at.selectbox(key="start-target").options
+    at.selectbox(key="start-target").set_value(
+        next(o for o in opts if o.startswith("demo-chat"))).run()
     at.text_input(key="start-version").set_value("ui-e2e").run()
     at.button(key="start-btn").click().run()
     assert not at.exception
@@ -115,3 +117,25 @@ def test_attribution_page_friendly_for_generic(service):
     at.selectbox(key="attr-run").set_value("ui-attr").run()
     assert not at.exception  # generic 套件 → 友好提示（info），不报错
     assert any("RAG" in i.value for i in at.info)
+
+
+def test_settings_page_register_http_target(service):
+    at = _app(service)
+    at.run()
+    at.sidebar.radio[0].set_value("⚙️ 被测目标设置").run()
+    at.text_input(key="cfg-http-id").set_value("ui-app").run()
+    at.text_input(key="cfg-http-url").set_value("http://127.0.0.1:9000/invoke").run()
+    at.button(key="cfg-http-add").click().run()
+    assert not at.exception
+    assert "ui-app" in service.list_targets()[1]["target_id"] or         any(t["target_id"] == "ui-app" for t in service.list_targets())
+
+
+def test_import_suite_page_with_template(service):
+    at = _app(service)
+    at.run()
+    at.sidebar.radio[0].set_value("📥 导入评测集").run()
+    at.button(key="imp-template").click().run()
+    at.text_input(key="imp-id").set_value("ui-imported").run()
+    at.button(key="imp-save").click().run()
+    assert not at.exception
+    assert any(s["suite_id"] == "ui-imported" for s in service.list_suites())

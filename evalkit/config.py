@@ -16,7 +16,17 @@ JUDGE_TEMPERATURE = 0.0
 
 
 def poke_rag_root() -> str:
-    root = os.environ.get("POKE_RAG_ROOT") or os.path.join(os.path.dirname(_ROOT), "poke-rag")
+    """优先级：环境变量 > 用户配置文件 targets.local.json > 默认兄弟目录。"""
+    root = os.environ.get("POKE_RAG_ROOT")
+    if not root:
+        try:
+            from evalkit.targets_store import pokerag_root_override
+
+            root = pokerag_root_override()
+        except Exception:
+            root = ""
+    if not root:
+        root = os.path.join(os.path.dirname(_ROOT), "poke-rag")
     return os.path.abspath(root)
 
 

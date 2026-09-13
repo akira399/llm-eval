@@ -24,7 +24,7 @@ from datetime import datetime
 from evalkit.contracts import evaluation_case_from_rag, load_evaluation_cases
 from evalkit.engine import EvaluationEngine
 from evalkit.judge_profile import RagJudgeProfile, chat_profile, json_profile, none_profile
-from evalkit.registry import TARGET_CATALOG, build_target
+from evalkit.registry import build_target, catalog_for, effective_catalog
 from evalkit.runner import summarize
 from evalkit.schema import load_cases
 
@@ -227,9 +227,9 @@ class EvalService:
         files = self._suite_files()
         if suite_id not in files:
             raise ServiceError("SUITE_NOT_FOUND", f"评测集不存在：{suite_id}")
-        if target_id not in TARGET_CATALOG:
+        if target_id not in effective_catalog():
             raise ServiceError("TARGET_NOT_REGISTERED",
-                               f"未注册的被测目标：{target_id}（可选：{sorted(TARGET_CATALOG)}）")
+                               f"未注册的被测目标：{target_id}（可选：{sorted(effective_catalog())}）")
         _, kind = files[suite_id]
         _, cases = self._load_suite(*files[suite_id])
         todo = cases[:limit] if limit else cases
@@ -278,7 +278,7 @@ class EvalService:
 
             adapter = build_target(job["target_id"])
             # 评分配置按"目标应用的类型"选（chat/json/rag），与套件文件类型解耦
-            target_kind = TARGET_CATALOG.get(job["target_id"], {}).get("kind", "chat")
+            target_kind = effective_catalog().get(job["target_id"], {}).get("kind", "chat")
             profile = self._pick_profile(target_kind, bool(job["judge"]))
             engine = EvaluationEngine(
                 adapter=adapter, profile=profile,
@@ -320,6 +320,51 @@ class EvalService:
         if not matches:
             raise ServiceError("RUN_NOT_FOUND", f"找不到运行记录：{version_or_file}")
         return matches[-1]
+
+    def list_targets(self) -> list[dict]:
+        """内置 + 用户自定义目标，附可用性（能否构建适配器）。"""
+        out = []
+        for tid, info in effective_catalog().items():
+            entry = {"target_id": tid, **info}
+            try:
+                build_target(tid)
+                entry["available"] = True
+            except Exception as exc:
+                entry["available"] = False
+                entry["unavailable_reason"] = str(exc)[:160]
+            out.append(entry)
+        return out
+
+    def check_target(self, target_id: str) -> dict:
+        """构建适配器 + 发一次真实调用（演示/HTTP 目标即时返回；RAG 走真实回答）。"""
+        adapter = build_target(target_id)
+        from evalkit.contracts import InvocationRequest
+
+        obs = adapter.invoke(InvocationRequest(
+            input={"text": "退款政策是什么？"}, metadata={"check": True}))
+        return {"target_id": target_id, "status": obs.status,
+                "output": obs.output[:200], "error": obs.error,
+                "latency_ms": obs.latency_ms}
+
+    def save_suite(self, suite_id: str, content: str, overwrite: bool = False) -> dict:
+        """导入用户评测集：先校验后落盘（generic 或 RAG 格式均可）。"""
+        import re as _re
+
+        if not _re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{1,48}$", suite_id or ""):
+            raise ServiceError("INVALID_ARGUMENT", f"评测集名只能用字母/数字/-/_（2~49 位）：{suite_id!r}")
+        path = os.path.join(self.suites_dir, f"{suite_id}.yaml")
+        if os.path.exists(path) and not overwrite:
+            raise ServiceError("ALREADY_EXISTS", f"评测集已存在：{suite_id}（勾选覆盖后重试）")
+        os.makedirs(self.suites_dir, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        try:  # 落盘后立即用正式加载器校验，失败则回滚
+            _, cases = self._load_suite(path, "generic" if "format: generic" in content else "rag")
+        except Exception as exc:
+            os.remove(path)
+            raise ServiceError("INVALID_ARGUMENT", f"用例集校验失败（已回滚）：{exc}")
+        return {"suite_id": suite_id, "case_count": len(cases),
+                "path": os.path.relpath(path, self.root)}
 
     def list_runs(self, tenant: str = LOCAL_TENANT, limit: int = 30) -> list[dict]:
         """列出本租户最近的运行（新→旧），供工作台/报表选择。

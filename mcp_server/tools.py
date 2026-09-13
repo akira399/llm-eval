@@ -25,7 +25,13 @@ class ToolApi:
         return self.service.get_suite(suite_id, limit=limit)
 
     def list_targets(self) -> dict:
-        return {"targets": [{"target_id": tid, **info} for tid, info in TARGET_CATALOG_ITEMS()]}
+        return {"targets": self.service.list_targets()}
+
+    def check_target(self, target_id: str) -> dict:
+        return self.service.check_target(target_id)
+
+    def save_suite(self, suite_id: str, content: str, overwrite: bool = False) -> dict:
+        return self.service.save_suite(suite_id=suite_id, content=content, overwrite=overwrite)
 
     def get_run(self, version_or_file: str, tenant: str = "local") -> dict:
         return self.service.get_run(version_or_file, tenant=tenant)
@@ -57,12 +63,6 @@ class ToolApi:
 
     def cancel_job(self, job_id: str, tenant: str = "local") -> dict:
         return {"job": self.service.cancel_job(job_id, tenant=tenant)}
-
-
-def TARGET_CATALOG_ITEMS():
-    from evalkit.registry import TARGET_CATALOG
-
-    return TARGET_CATALOG.items()
 
 
 def call_tool(api: ToolApi, fn_name: str, **kwargs) -> dict:

@@ -19,8 +19,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import streamlit as st
 
-from evalkit.registry import TARGET_CATALOG
+from evalkit.registry import effective_catalog
 from evalkit.service import EvalService, ServiceError, get_service
+from evalkit.targets_store import (
+    add_http_target, config_path, load_user_config, pokerag_root_override,
+    remove_http_target, save_user_config)
 
 st.set_page_config(page_title="LLM-Eval 工作台", page_icon="🧪", layout="wide")
 
@@ -30,7 +33,8 @@ DIM_NAMES = {"correctness": "正确性", "faithfulness": "引用忠实度", "for
              "relevance": "相关性"}
 
 PAGE = st.sidebar.radio("功能", ["🏠 总览", "🚀 发起评测", "📋 任务中心",
-                                "📊 结果查看", "🔍 失败归因", "⚖️ 版本对比", "✍️ 人工标注"],
+                                "📊 结果查看", "🔍 失败归因", "⚖️ 版本对比",
+                                "⚙️ 被测目标设置", "📥 导入评测集", "✍️ 人工标注"],
                         key="page")
 st.sidebar.caption("LLM-Eval · LLM 应用效果评测与回归平台")
 
@@ -71,7 +75,7 @@ if PAGE == "🏠 总览":
 
     c1, c2, c3 = st.columns(3)
     c1.metric("评测集（考卷）", len(suites) if suites else 0)
-    c2.metric("被测目标", len(TARGET_CATALOG))
+    c2.metric("被测目标", len(effective_catalog()))
     c3.metric("最近任务", len(jobs) if jobs else 0)
 
     st.subheader("📚 评测集（考卷）")
@@ -83,7 +87,7 @@ if PAGE == "🏠 总览":
 
     st.subheader("🤖 可评测的目标（被测 AI 应用）")
     st.dataframe(pd.DataFrame([{"目标": k, "说明": v["description"]}
-                               for k, v in TARGET_CATALOG.items()]),
+                               for k, v in effective_catalog().items()]),
                  use_container_width=True, hide_index=True)
 
     st.subheader("🕐 最近的评测任务")
@@ -107,9 +111,17 @@ elif PAGE == "🚀 发起评测":
     if not suite_ids:
         st.warning("没有可用评测集。"); st.stop()
 
+    targets, _ = _safe(svc.list_targets)
+    unavailable = {t["target_id"]: t.get("unavailable_reason", "")
+                   for t in (targets or []) if not t.get("available")}
     c1, c2 = st.columns(2)
     suite_id = c1.selectbox("评测集", suite_ids, key="start-suite")
-    target_id = c2.selectbox("被测目标", list(TARGET_CATALOG), key="start-target")
+    target_options = [f"{t['target_id']}（{'可用' if t.get('available') else '不可用：配置缺失'}）"
+                      for t in (targets or [])]
+    target_pick = c2.selectbox("被测目标", target_options, key="start-target")
+    target_id = target_pick.split("（")[0]
+    if target_id in unavailable:
+        st.error(f"该目标暂不可用：{unavailable[target_id]} —— 去「⚙️ 被测目标设置」补配置后再来。")
     version = st.text_input("版本标签（给这次评测起个名，之后用它对比）",
                             value=f"run-{time.strftime('%m%d-%H%M')}", key="start-version")
     meta_suite, _ = _safe(svc.get_suite, suite_id, limit=1)
@@ -120,7 +132,7 @@ elif PAGE == "🚀 发起评测":
     if total:
         st.caption(f"该评测集共 {total} 条用例。")
 
-    if st.button("🚀 开始评测", key="start-btn", type="primary"):
+    if st.button("🚀 开始评测", key="start-btn", type="primary", disabled=target_id in unavailable):
         with st.spinner("提交任务…"):
             job, err = _safe(svc.start_run, suite_id=suite_id, target_id=target_id,
                              version=version, limit=int(limit) or None, judge=judge,
@@ -270,6 +282,107 @@ elif PAGE == "⚖️ 版本对比":
     st.caption("变化 > 0 表示对比版本更好；两次运行用的是同一套考卷，数字可直接比较。")
     st.write(f"拒答：基准 {left['n_rejected']} → 对比 {right['n_rejected']}；"
              f"错误：基准 {left['n_errors']} → 对比 {right['n_errors']}")
+
+# ---------------------------------------------------------------- 被测目标设置
+
+elif PAGE == "⚙️ 被测目标设置":
+    st.title("⚙️ 被测目标设置")
+    st.caption("把你自己的 AI 应用接入评测：填本地目录（RAG 类）或注册一个 HTTP 端点。配置保存在本机 targets.local.json，不入仓库。")
+
+    st.subheader("🤖 Poke-RAG 本地目录")
+    st.caption("让评测进程直接找到被测的 Poke-RAG 代码（含 src/generation/rag.py 的那个文件夹）。")
+    pr_default = pokerag_root_override() or ""
+    pr = st.text_input("poke-rag 根目录（绝对路径）", value=pr_default, key="cfg-pr-root")
+    c1, c2 = st.columns(2)
+    if c1.button("💾 保存目录", key="cfg-pr-save"):
+        save_user_config(pokerag_root=pr)
+        st.success("已保存，立即生效。")
+    if c2.button("🔎 检查可用性", key="cfg-pr-check"):
+        result, err = _safe(svc.check_target, "pokerag-local")
+        if err:
+            st.error(err)
+        elif result["status"] == "error":
+            st.error(f"调用失败：{result['error']}")
+        else:
+            st.success(f"可用 ✅ 示例回答：{result['output'][:80]}（{result['latency_ms']}ms）")
+
+    st.subheader("🌐 注册 HTTP 目标（评你自己的应用）")
+    st.caption("你的应用只需提供一个 HTTP 端点：接收 {input: {...}}，返回 {status, output}。协议见 README。")
+    targets, _ = _safe(svc.list_targets)
+    if targets:
+        rows = [{"目标": t["target_id"], "类型": t["kind"], "可用": "✅" if t.get("available") else "❌",
+                 "说明": t.get("description", "") + (
+                     f"（{t.get('unavailable_reason', '')}）" if not t.get("available") else "")}
+                for t in targets]
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    c1, c2, c3 = st.columns(3)
+    http_id = c1.text_input("目标 id（小写字母/数字/-）", key="cfg-http-id", placeholder="my-app")
+    http_url = c2.text_input("端点地址", key="cfg-http-url", placeholder="http://127.0.0.1:9000/invoke")
+    http_desc = c3.text_input("说明（可选）", key="cfg-http-desc")
+    if st.button("➕ 注册 HTTP 目标", key="cfg-http-add"):
+        try:
+            add_http_target(http_id, http_url, http_desc)
+            st.success(f"已注册：{http_id}"); st.rerun()
+        except ValueError as exc:
+            st.error(str(exc))
+
+    user_targets = [t["target_id"] for t in load_user_config()["http_targets"]]
+    if user_targets:
+        st.subheader("管理自定义目标")
+        for tid in user_targets:
+            c1, c2, c3 = st.columns([3, 1, 1])
+            c1.write(f"🌐 {tid}")
+            if c2.button("测试连接", key=f"cfg-test-{tid}"):
+                result, err = _safe(svc.check_target, tid)
+                if err or result["status"] == "error":
+                    st.error(f"调用失败：{err or result['error']}")
+                else:
+                    st.success(f"可用 ✅ {result['output'][:60]}")
+            if c3.button("🗑 删除", key=f"cfg-del-{tid}"):
+                remove_http_target(tid)
+                st.rerun()
+
+    st.caption(f"配置文件位置：{config_path()}")
+
+# ---------------------------------------------------------------- 导入评测集
+
+elif PAGE == "📥 导入评测集":
+    st.title("📥 导入评测集")
+    st.caption("把你自己的考卷粘进来（YAML）。保存时会完整校验，格式错误会告诉你哪里不对；也可以直接把 .yaml 文件放进仓库的 suites/ 文件夹，自动识别。")
+
+    template = """meta:
+  name: my-suite
+  format: generic
+cases:
+  - case_id: case-001
+    input: {text: "你们退款政策是什么？"}
+    expected_behavior:
+      type: answer
+      facts: ["7 天无理由退款"]
+    category: 售后
+  - case_id: case-002
+    input: {text: "今天天气怎么样？"}
+    expected_behavior:
+      type: reject
+    category: 边界"""
+    if st.button("📋 填入模板", key="imp-template"):
+        st.session_state["imp-content"] = template
+        st.rerun()
+
+    c1, c2 = st.columns([1, 2])
+    suite_id = c1.text_input("评测集名（字母/数字/-/_）", key="imp-id", placeholder="my-suite")
+    c2.checkbox("同名时覆盖", key="imp-overwrite")
+    content = st.text_area("评测集内容（YAML）", height=380, key="imp-content",
+                           value=st.session_state.get("imp-content", ""))
+    if st.button("💾 校验并保存", key="imp-save", type="primary"):
+        result, err = _safe(svc.save_suite, suite_id, content,
+                            overwrite=st.session_state.get("imp-overwrite", False))
+        if err:
+            st.error(err)
+        else:
+            st.success(f"已导入：{result['case_count']} 条用例 → suites/{result['suite_id']}.yaml。"
+                       "去「🚀 发起评测」就能选到它。")
 
 # ---------------------------------------------------------------- 人工标注
 
