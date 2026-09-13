@@ -71,6 +71,35 @@ $PY -m pytest tests/ -q
 环境变量 `POKE_RAG_ROOT` 可指向任意位置的 poke-rag；适配器 `evalkit/providers/`
 是开放的——为其他 LLM 应用写一个同类适配器即可复用全部评测能力。
 
+## 通用评测（任意 AI 应用）
+
+Phase 0 起核心契约与具体应用解耦（`evalkit/contracts.py` + `engine.py` +
+`judge_profile.py`）：实现一个 `TargetAdapter.invoke()` 就能评测任何 LLM 应用，
+评分维度由 `JudgeProfile` 配置（规则评分器零成本，LLM 评分器可选）。
+仓库自带两个离线确定性演示：
+
+```bash
+$PY scripts/run_generic_eval.py --list-targets
+$PY scripts/run_generic_eval.py --suite suites/demo-chat.yaml --target demo-chat --version demo1
+$PY scripts/run_generic_eval.py --suite suites/demo-json.yaml --target demo-json --version demo2
+```
+
+## MCP 服务（本地 stdio）
+
+把评测能力暴露给 Claude/Cursor 等 MCP 客户端（9 个工具：列套件/查详情/发起任务/
+轮询进度/查结果/版本对比/失败归因等；后台 Job 模型，长任务异步执行）：
+
+```json
+{"mcpServers": {"llm-eval": {
+  "command": "<python>",
+  "args": ["<仓库>/scripts/mcp_server.py"],
+  "env": {"LLM_EVAL_ROOT": "<仓库路径>"}
+}}}
+```
+
+客户端里即可对话式操作："列出评测集 → 发起一次评测 → 查进度 → 解读结果"。
+后续路线（FastAPI 多租户服务 / 远程 MCP / 连接器生态）见 [docs/00 §11](docs/00-技术方案.md)。
+
 ## 用例集格式
 
 ```yaml
