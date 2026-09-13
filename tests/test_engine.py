@@ -95,3 +95,56 @@ def test_registry_target_runs_through_engine(tmp_path):
     engine = EvaluationEngine(adapter=adapter, profile=chat_profile(), out_dir=str(tmp_path))
     summary = engine.run(cases[:1], version="registry-test")
     assert summary["judge_means"]["fact_coverage"] == 1.0
+
+
+def test_judge_explosion_isolated(tmp_path):
+    """评分器整体异常：单条记录带 judge_error，整批评测不中断（服务化审查 H3）。"""
+    from evalkit.judge_profile import JudgeProfile
+
+    class ExplodingProfile(JudgeProfile):
+        def __init__(self):
+            super().__init__(profile_id="boom", dimensions=["x"], graders={})
+
+        def judge(self, case, obs):
+            raise RuntimeError("裁判崩溃")
+
+    _, cases = _load("demo-chat.yaml")
+    engine = EvaluationEngine(adapter=DemoChatAdapter(), profile=ExplodingProfile(),
+                              out_dir=str(tmp_path))
+    summary = engine.run(cases[:2], version="judge-boom")
+    assert summary["n_cases"] == 2 and summary["n_errors"] == 0
+    with open(os.path.join(str(tmp_path), summary["run_file"]), encoding="utf-8") as f:
+        rec = json.loads(f.readline())
+    assert "裁判崩溃" in rec["judge_error"] and rec["judge"] == {}
+
+
+def test_run_id_in_summary_and_filename(tmp_path):
+    """run_id 防同秒碰撞：文件名与 summary 均携带。"""
+    _, cases = _load("demo-chat.yaml")
+    engine = EvaluationEngine(adapter=DemoChatAdapter(), profile=none_profile(), out_dir=str(tmp_path))
+    s1 = engine.run(cases[:1], version="rid")
+    s2 = engine.run(cases[1:2], version="rid")  # 同秒内连续两次
+    assert s1["run_id"] != s2["run_id"]
+    assert s1["run_id"] in s1["run_file"] and s2["run_id"] in s2["run_file"]
+
+
+def test_llm_usage_aggregated_into_summary(tmp_path):
+    """成本账本 v1：JudgeProfile 暴露 total_usage 时汇入 summary（fake 验证管道）。"""
+    class UsageProfile(none_profile.__class__ if False else object):
+        pass
+
+    from evalkit.judge_profile import JudgeProfile
+
+    class UsageJudgeProfile(JudgeProfile):
+        def __init__(self):
+            super().__init__(profile_id="usage", dimensions=[], graders={})
+
+        @property
+        def total_usage(self):
+            return {"requests": 3, "input_tokens": 100, "output_tokens": 50}
+
+    _, cases = _load("demo-chat.yaml")
+    engine = EvaluationEngine(adapter=DemoChatAdapter(), profile=UsageJudgeProfile(),
+                              out_dir=str(tmp_path))
+    summary = engine.run(cases[:1], version="usage-test")
+    assert summary["llm_usage"] == {"requests": 3, "input_tokens": 100, "output_tokens": 50}

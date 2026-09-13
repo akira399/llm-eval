@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+      - name: 单元测试（依赖本机 poke-rag 的集成用例会自动跳过）
+        run: python -m pytest tests/ -q
+      - name: MCP 可用性检查（演示目标，无需本地环境）
+        run: python scripts/mcp_usability_check.py

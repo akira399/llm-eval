@@ -90,7 +90,7 @@ def test_http_target_through_engine(tmp_path, http_adapter):
 
 def test_api_service_end_to_end(service):
     """API 服务完整旅程：建任务 → 轮询 → 查结果 → 对比（与 MCP 相同的服务层）。"""
-    client = TestClient(create_app(service=service))
+    client = TestClient(create_app(service=service, auth_enabled=False))
 
     assert client.get("/api/health").json()["status"] == "ok"
     suites = client.get("/v1/suites").json()["suites"]
@@ -115,7 +115,7 @@ def test_api_service_end_to_end(service):
 
 
 def test_api_error_codes_over_http(service):
-    client = TestClient(create_app(service=service))
+    client = TestClient(create_app(service=service, auth_enabled=False))
     assert client.get("/v1/suites/nope").status_code == 404
     bad = client.post("/v1/jobs", json={
         "suite_id": "demo-chat", "target_id": "http://evil", "version": "x"})

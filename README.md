@@ -1,5 +1,7 @@
 # LLM-Eval · LLM 应用效果评测与回归平台
 
+[![CI](https://github.com/akira399/llm-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/akira399/llm-eval/actions/workflows/ci.yml)
+
 给 LLM 应用装上「效果仪表盘」：改提示词/换模型/调检索参数之前，
 先用同一套用例集跑一遍，用数字回答三个问题——**变好了还是变坏了？
 问题出在检索还是生成？AI 裁判自己可信吗？**
@@ -98,7 +100,12 @@ $PY scripts/run_generic_eval.py --suite suites/demo-json.yaml --target demo-json
 ```
 
 客户端里即可对话式操作："列出评测集 → 发起一次评测 → 查进度 → 解读结果"。
-后续路线（FastAPI 多租户服务 / 远程 MCP / 连接器生态）见 [docs/00 §11](docs/00-技术方案.md)。
+
+HTTP API（`api_server/`）与 MCP 共用同一服务层；多租户访问用 API Key：
+`python scripts/create_tenant.py --name 团队A` 签发后以
+`Authorization: Bearer llev_…` 调用（本地 CLI/MCP 免钥）。租户的运行产物
+物理隔离在 `runs/tenants/<tenant_id>/`。
+后续路线（PostgreSQL / 远程 MCP / 连接器生态）见 [docs/00 §11](docs/00-技术方案.md)。
 
 ## 用例集格式
 

@@ -231,6 +231,10 @@ class RagJudgeProfile(JudgeProfile):
         super().__init__(profile_id="rag-four-dims",
                          dimensions=["correctness", "faithfulness", "format", "tone"], graders={})
 
+    @property
+    def total_usage(self) -> dict:
+        return self._llm_judge.total_usage
+
     def judge(self, case: EvaluationCase, obs: TargetObservation) -> dict:
         from evalkit.schema import Case as RagCase, TargetResult
 

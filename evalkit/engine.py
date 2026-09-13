@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from time import perf_counter
@@ -49,14 +50,21 @@ class EvaluationEngine:
                 ))
 
         stamp = t0.strftime("%Y%m%d-%H%M%S")
-        run_path = os.path.join(self.out_dir, f"{version}-{stamp}.jsonl")
+        run_id = uuid.uuid4().hex[:12]  # 防同秒碰撞（服务化审查 N1）
+        run_path = os.path.join(self.out_dir, f"{version}-{stamp}-{run_id}.jsonl")
         with open(run_path, "w", encoding="utf-8") as f:
             for rec in records:
                 f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
         summary = summarize(records, version=version)
         summary["run_file"] = os.path.basename(run_path)
+        summary["run_id"] = run_id
         summary["engine"] = {"target_id": self.adapter.target_id, "profile_id": self.profile.profile_id}
+        usage = getattr(self.profile, "total_usage", None)
+        if callable(usage):  # 兼容 property 与方法两种形态
+            usage = usage()
+        if isinstance(usage, dict) and usage.get("requests"):
+            summary["llm_usage"] = usage  # 成本账本 v1：token 用量入汇总
         summary_path = run_path.replace(".jsonl", ".summary.json")
         with open(summary_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, ensure_ascii=False, indent=2)
@@ -77,16 +85,25 @@ class EvaluationEngine:
         if not obs.latency_ms:
             obs.latency_ms = int((perf_counter() - t0) * 1000)
 
-        judge = self.profile.judge(case, obs)
+        try:
+            judge = self.profile.judge(case, obs)
+        except Exception as exc:  # 评分器整体异常（单维已各自兜底）→ fail-visible，不拖垮整批
+            judge = {}
+            judge_error = f"{type(exc).__name__}: {exc}"
+        else:
+            judge_error = None
         if self.progress_cb:
             try:
                 self.progress_cb(index, total, case.case_id)
             except Exception:
                 pass  # 进度回调失败不影响评测本身
 
-        return {
+        record = {
             "meta": {"version": version, "ts": datetime.now().isoformat(timespec="seconds")},
             "case": case.to_dict(),
             "target": {**obs.to_dict(), **obs.legacy_fields()},
             "judge": judge,
         }
+        if judge_error:
+            record["judge_error"] = judge_error
+        return record

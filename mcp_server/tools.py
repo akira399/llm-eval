@@ -26,34 +26,36 @@ class ToolApi:
     def list_targets(self) -> dict:
         return {"targets": [{"target_id": tid, **info} for tid, info in TARGET_CATALOG_ITEMS()]}
 
-    def get_run(self, version_or_file: str) -> dict:
-        return self.service.get_run(version_or_file)
+    def get_run(self, version_or_file: str, tenant: str = "local") -> dict:
+        return self.service.get_run(version_or_file, tenant=tenant)
 
-    def compare_runs(self, baseline: str, candidate: str) -> dict:
-        return self.service.compare_runs(baseline, candidate)
+    def compare_runs(self, baseline: str, candidate: str, tenant: str = "local") -> dict:
+        return self.service.compare_runs(baseline, candidate, tenant=tenant)
 
-    def attribute_run(self, version_or_file: str) -> dict:
-        return self.service.attribute_run(version_or_file)
+    def attribute_run(self, version_or_file: str, tenant: str = "local") -> dict:
+        return self.service.attribute_run(version_or_file, tenant=tenant)
 
-    def list_jobs(self, limit: int = 20) -> dict:
-        return {"jobs": self.service.list_jobs(limit=limit)}
+    def list_jobs(self, limit: int = 20, tenant: str = "local") -> dict:
+        return {"jobs": self.service.list_jobs(limit=limit, tenant=tenant)}
 
-    def get_job(self, job_id: str) -> dict:
-        return self.service.get_job(job_id)
+    def get_job(self, job_id: str, tenant: str = "local") -> dict:
+        return self.service.get_job(job_id, tenant=tenant)
 
     # ---- 长任务 ----
 
     def start_run(self, suite_id: str, target_id: str, version: str, limit: int | None = None,
                   judge: bool = True, budget_max_cases: int | None = None,
-                  idempotency_key: str | None = None) -> dict:
+                  idempotency_key: str | None = None, tenant: str = "local",
+                  async_start: bool = True) -> dict:
         job = self.service.start_run(
             suite_id=suite_id, target_id=target_id, version=version, limit=limit,
             judge=judge, budget_max_cases=budget_max_cases, idempotency_key=idempotency_key,
+            tenant=tenant, async_start=async_start,
         )
         return {"job": job, "hint": "用 get_job 轮询进度；终态后用 get_run/compare_runs/attribute_run 查看结果"}
 
-    def cancel_job(self, job_id: str) -> dict:
-        return {"job": self.service.cancel_job(job_id)}
+    def cancel_job(self, job_id: str, tenant: str = "local") -> dict:
+        return {"job": self.service.cancel_job(job_id, tenant=tenant)}
 
 
 def TARGET_CATALOG_ITEMS():

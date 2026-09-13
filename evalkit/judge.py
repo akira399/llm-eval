@@ -75,6 +75,16 @@ class LLMJudge:
     def __init__(self, client=None, model: str | None = None):
         self._client = client
         self.model = model
+        self.usage: list[dict] = []  # 成本账本：每次真实 LLM 调用的 token 用量
+
+    @property
+    def total_usage(self) -> dict:
+        agg = {"requests": 0, "input_tokens": 0, "output_tokens": 0}
+        for u in self.usage:
+            agg["requests"] += 1
+            for k in ("input_tokens", "output_tokens"):
+                agg[k] += int(u.get(k) or 0)
+        return agg
 
     def _ask(self, system: str, user: str) -> str:
         messages = [
@@ -85,7 +95,8 @@ class LLMJudge:
             return self._client(messages)
         from evalkit import llm as llm_mod
 
-        return llm_mod.chat(messages, temperature=0.0, model=self.model)
+        return llm_mod.chat(messages, temperature=0.0, model=self.model,
+                            on_usage=self.usage.append)
 
     def judge(self, case: Case, result: TargetResult) -> dict:
         return {

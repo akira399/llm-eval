@@ -51,12 +51,21 @@ class Runner:
 
     def _run_one(self, case: Case, version: str) -> dict:
         result: TargetResult = self.provider.answer(case.query)
+        judge = None
+        judge_error = None
+        if self.judge:
+            try:
+                judge = self.judge.judge(case, result)
+            except Exception as exc:  # 评分器异常不拖垮整批（与服务化审查 H3 对齐）
+                judge, judge_error = {}, f"{type(exc).__name__}: {exc}"
         record = {
             "meta": {"version": version, "ts": datetime.now().isoformat(timespec="seconds")},
             "case": case.to_dict(),
             "target": result.to_dict(),
-            "judge": self.judge.judge(case, result) if self.judge else None,
+            "judge": judge,
         }
+        if judge_error:
+            record["judge_error"] = judge_error
         return record
 
     def _effective_config(self) -> dict:
