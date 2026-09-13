@@ -18,6 +18,7 @@ import tempfile
 import time
 
 from evalkit.config import poke_rag_root
+from evalkit.contracts import TargetAdapter
 from evalkit.schema import TargetResult
 
 
@@ -148,3 +149,23 @@ class PokeRagProvider:
         if key:
             cfg["llm"]["api_key"] = f"{key[:3]}****{key[-4:]}" if len(key) > 6 else "****"
         return cfg
+
+class PokeRagAdapter(TargetAdapter):
+    """Poke-RAG 的通用连接器：把旧 Provider 包装成 TargetAdapter 协议。
+
+    进程内复用现有 PokeRagProvider（含配置快照注入）；HTTP 模式沿用其 SSE 解析。
+    注意服务化边界：inprocess 只适合本地可信环境（见 docs/00 §11）。
+    """
+
+    target_id = "pokerag-local"
+
+    def __init__(self, provider=None, **provider_kwargs):
+        self._provider = provider if provider is not None else PokeRagProvider(**provider_kwargs)
+
+    def invoke(self, request) -> "TargetObservation":
+        from evalkit.contracts import TargetObservation, observation_from_target_result
+
+        result = self._provider.answer(request.text())
+        obs = observation_from_target_result(result)
+        obs.meta["citations_ok"] = result.citations_ok
+        return obs

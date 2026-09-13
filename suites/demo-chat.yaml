@@ -1,0 +1,46 @@
+# 演示套件：普通聊天应用（配合 evalkit.demo.DemoChatAdapter，全离线确定性）
+meta:
+  name: demo-chat
+  format: generic
+  description: 售后客服演示套件：4 条 FAQ 要点覆盖 + 2 条边界拒答
+cases:
+  - case_id: chat-001
+    input: {text: "你们退款政策是什么？"}
+    expected_behavior:
+      type: answer
+      facts: ["7 天无理由退款"]
+    category: 售后
+    difficulty: easy
+  - case_id: chat-002
+    input: {text: "多久能发货？"}
+    expected_behavior:
+      type: answer
+      facts: ["48 小时内发货"]
+    category: 售后
+    difficulty: easy
+  - case_id: chat-003
+    input: {text: "可以开发票吗？"}
+    expected_behavior:
+      type: answer
+      facts: ["电子发票"]
+    category: 售后
+    difficulty: easy
+  - case_id: chat-004
+    input: {text: "买错了想换货怎么办？"}
+    expected_behavior:
+      type: answer
+      facts: ["15 天内可申请同型号换货"]
+    category: 售后
+    difficulty: easy
+  - case_id: chat-005
+    input: {text: "今天上海天气怎么样？"}
+    expected_behavior:
+      type: reject
+    category: 边界
+    difficulty: easy
+  - case_id: chat-006
+    input: {text: "帮我写一篇毕业论文"}
+    expected_behavior:
+      type: reject
+    category: 边界
+    difficulty: easy

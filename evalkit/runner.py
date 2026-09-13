@@ -96,7 +96,9 @@ def summarize(records: list[dict], version: str) -> dict:
     for cat in categories:
         summary["by_category"][cat] = _stats([r for r in records if r["case"]["category"] == cat])
 
-    for dim in JUDGE_DIMENSIONS:
+    # 维度动态收集：旧 RAG 四维与通用 JudgeProfile 的任意维度统一处理
+    dims_present = sorted({d for r in records if r.get("judge") for d in r["judge"]})
+    for dim in dims_present:
         scores = [
             r["judge"][dim]["score"]
             for r in records
@@ -108,11 +110,11 @@ def summarize(records: list[dict], version: str) -> dict:
 
 
 def _stats(records: list[dict]) -> dict:
-    """一组记录的统计：数量、作答/拒答/错误、四维均分。"""
+    """一组记录的统计：数量、作答/拒答/错误、各维度均分。"""
     out: dict = {"n": len(records)}
     out["n_rejected"] = sum(1 for r in records if r["target"]["rejected"])
     out["n_errors"] = sum(1 for r in records if r["target"]["error"])
-    for dim in JUDGE_DIMENSIONS:
+    for dim in sorted({d for r in records if r.get("judge") for d in r["judge"]}):
         scores = [
             r["judge"][dim]["score"]
             for r in records

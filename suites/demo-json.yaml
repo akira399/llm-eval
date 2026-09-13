@@ -1,0 +1,71 @@
+# 演示套件：结构化抽取应用（配合 evalkit.demo.DemoJsonAdapter，全离线确定性）
+# 设计：3 条通过 + 2 条带缺陷（缺字段/空抽取），验证 Schema 评分器能抓出问题
+meta:
+  name: demo-json
+  format: generic
+  description: 信息抽取演示套件：JSON Schema 合法性 + 字段值核对
+cases:
+  - case_id: json-001
+    input: {text: "姓名：张三，年龄28岁，来自杭州。"}
+    expected_behavior:
+      type: json
+      json_schema:
+        type: object
+        required: [name, age]
+        properties:
+          name: {type: string}
+          age: {type: integer}
+      expect_fields: {name: 张三, age: 28}
+    category: 抽取
+    difficulty: easy
+  - case_id: json-002
+    input: {text: "姓名：李四，来自上海。"}
+    expected_behavior:
+      type: json
+      json_schema:
+        type: object
+        required: [name, age]
+        properties:
+          name: {type: string}
+          age: {type: integer}
+      expect_fields: {name: 李四}
+    category: 抽取
+    difficulty: easy
+  - case_id: json-003
+    input: {text: "王五 45 岁，职业是工程师。"}
+    expected_behavior:
+      type: json
+      json_schema:
+        type: object
+        required: [name, age]
+        properties:
+          name: {type: string}
+          age: {type: integer}
+      expect_fields: {name: 王五, age: 45}
+    category: 抽取
+    difficulty: easy
+  - case_id: json-004
+    input: {text: "姓名：赵六，年龄30岁，备注：VIP 客户。"}
+    expected_behavior:
+      type: json
+      json_schema:
+        type: object
+        required: [name, age]
+        properties:
+          name: {type: string}
+          age: {type: integer}
+      expect_fields: {name: 赵六, age: 30}
+    category: 抽取
+    difficulty: easy
+  - case_id: json-005
+    input: {text: "今天天气不错，适合出门。"}
+    expected_behavior:
+      type: json
+      json_schema:
+        type: object
+        required: [name, age]
+        properties:
+          name: {type: string}
+          age: {type: integer}
+    category: 边界
+    difficulty: easy

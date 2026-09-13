@@ -1,6 +1,27 @@
-"""失败归因测试：卡片解析、两级判定、整批归因。"""
+"""失败归因测试：卡片解析、两级判定、整批归因（自造卡片目录，不依赖本地环境）。"""
+import json
+
+import pytest
+
+from evalkit import attribution as attribution_module
 from evalkit.attribution import attribute, attribute_run, resolve_card
 from evalkit.schema import Case
+
+
+@pytest.fixture
+def fake_cards(tmp_path, monkeypatch):
+    """自造最小卡片库并劫持 poke_rag_root，使解析逻辑可离线测试。"""
+    cards = tmp_path / "data" / "cards"
+    cards.mkdir(parents=True)
+    (cards / "pokemon.jsonl").write_text(
+        json.dumps({"card_id": "poke:149", "title_en": "dragonite"}) + "\n" +
+        json.dumps({"card_id": "poke:212", "title_en": "scizor"}) + "\n", encoding="utf-8")
+    (cards / "typechart.jsonl").write_text(
+        json.dumps({"card_id": "type:dragon", "title_en": "dragon-type matchups"}) + "\n", encoding="utf-8")
+    (cards / "meta.jsonl").write_text(
+        json.dumps({"card_id": "meta:gen9ou", "title_en": "gen9ou"}) + "\n", encoding="utf-8")
+    monkeypatch.setattr(attribution_module, "poke_rag_root", lambda: str(tmp_path))
+    return tmp_path
 
 
 def _case(**kw) -> Case:
@@ -14,7 +35,7 @@ def _record(case: Case, target: dict, judge_correctness=None) -> dict:
             "judge": {"correctness": {"score": judge_correctness}}}
 
 
-def test_resolve_card_passthrough_and_title():
+def test_resolve_card_passthrough_and_title(fake_cards):
     assert resolve_card("rule:move_query") == "rule:move_query"
     assert resolve_card("dragonite") == "poke:149"
     assert resolve_card("dragon-type matchups") == "type:dragon"
@@ -53,7 +74,7 @@ def test_attribute_without_expected_card():
     assert out["label"] == "未指定期望卡片"
 
 
-def test_attribute_run_filters_passes():
+def test_attribute_run_filters_passes(fake_cards):
     good_case = _case(id="g-1")
     bad_case = _case(id="b-1", expect_card_en="dragonite")
     records = [
