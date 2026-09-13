@@ -26,7 +26,18 @@
    → 汇总对比（分类目统计 · 版本回归 · 失败归因 · 人工盲评一致率）
 ```
 
-## 快速开始
+## 打开产品（三步）
+
+```bash
+git clone https://github.com/akira399/llm-eval
+cd llm-eval && pip install -r requirements.txt
+python -m streamlit run scripts/console.py --server.port 8501
+```
+
+浏览器打开工作台后：**总览 → 发起评测（选考卷+选目标，点一个按钮）→ 任务中心看进度 → 结果查看/失败归因/版本对比**，全程鼠标操作。
+内置两个离线演示目标（demo-chat / demo-json），无需任何 Key 就能立刻体验完整流程。
+
+## 快速开始（面向开发者）
 
 本框架依赖一个被测对象。以 Poke-RAG 为例（Python 3.12+）：
 

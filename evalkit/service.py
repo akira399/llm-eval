@@ -321,6 +321,34 @@ class EvalService:
             raise ServiceError("RUN_NOT_FOUND", f"找不到运行记录：{version_or_file}")
         return matches[-1]
 
+    def list_runs(self, tenant: str = LOCAL_TENANT, limit: int = 30) -> list[dict]:
+        """列出本租户最近的运行（新→旧），供工作台/报表选择。
+
+        version 取记录内的逻辑版本（meta.version），而非文件名戳——
+        用户在工作台看到的是自己起的版本名。
+        """
+        runs_dir = self._runs_dir_for(tenant)
+        out = []
+        for path in sorted(glob.glob(os.path.join(runs_dir, "*.jsonl")),
+                           key=os.path.getmtime, reverse=True):
+            stem = os.path.splitext(os.path.basename(path))[0]
+            version = stem
+            try:
+                with open(path, encoding="utf-8") as f:
+                    first = f.readline()
+                if first.strip():
+                    version = json.loads(first).get("meta", {}).get("version") or stem
+            except (OSError, json.JSONDecodeError):
+                pass
+            out.append({
+                "run_file": os.path.basename(path),
+                "version": version,
+                "mtime": datetime.fromtimestamp(os.path.getmtime(path)).isoformat(timespec="seconds"),
+            })
+            if len(out) >= limit:
+                break
+        return out
+
     def get_run(self, version_or_file: str, tenant: str = LOCAL_TENANT) -> dict:
         """运行摘要（不含逐条原文——逐条内容大，按需用 attribute/对比工具取）。"""
         path = self._find_run(version_or_file, tenant=tenant)
