@@ -101,6 +101,8 @@ $PY scripts/run_generic_eval.py --suite suites/demo-json.yaml --target demo-json
 
 客户端里即可对话式操作："列出评测集 → 发起一次评测 → 查进度 → 解读结果"。
 
+远程 MCP（团队/跨机）：`python scripts/mcp_server.py --transport http --port 8801`，
+客户端连 `http://<host>:8801/mcp` 并带 `Authorization: Bearer llev_…`（HTTPS 由反代负责）。
 HTTP API（`api_server/`）与 MCP 共用同一服务层；多租户访问用 API Key：
 `python scripts/create_tenant.py --name 团队A` 签发后以
 `Authorization: Bearer llev_…` 调用（本地 CLI/MCP 免钥）。租户的运行产物

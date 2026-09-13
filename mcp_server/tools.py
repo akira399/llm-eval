@@ -17,7 +17,8 @@ class ToolApi:
 
     # ---- 只读 ----
 
-    def list_suites(self) -> dict:
+    def list_suites(self, tenant: str = "local") -> dict:
+        # 套件为项目级共享资产（全局可读）；tenant 仅为调用签名统一
         return {"suites": self.service.list_suites()}
 
     def get_suite(self, suite_id: str, limit: int = 20) -> dict:
